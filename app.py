@@ -24,6 +24,11 @@ def get_current_user(): 	#checking if the user has logged in session or not
 @app.route('/')
 def index():
 	user = get_current_user()
+	db = get_db()
+
+	qcur = db.execute('select questions.id, questions.question_text, askers.name as asker_name, experts.name as expert_name from questions join users as askers on askers.id = questions.asked_by_id join users as experts on experts.id = questions.expert_id where questions.answer_text is not null')
+	qres = qcur.fetchone()
+
 	return render_template('home.html', user =user)
 
 @app.route('/register', methods= ['GET','POST'])
@@ -66,25 +71,57 @@ def question():
 	user = get_current_user()
 	return render_template('question.html',user=user)
 
-@app.route('/answer')
-def answer():
+@app.route('/answer/<question_id>', methods=['GET','POST'])
+def answer(question_id):
 	user = get_current_user()
-	return render_template('answer.html', user=user)
+	db = get_db()
+	if request.method == 'POST':
+		db.execute('update questions set answer_text=? where id=?',[request.form['answer'], question_id])
+		db.commit()
+		return redirect(url_for('unanswered'))
 
-@app.route('/ask')
+	qcur = db.execute('select id, question_text from questions where id = ?', [question_id])
+	question = qcur.fetchone()
+	return render_template('answer.html', user=user, question=question)
+
+@app.route('/ask', methods=['GET', 'POST'])
 def ask():
 	user = get_current_user()
-	return render_template('ask.html',user=user)
+	db = get_db()
+	if request.method == 'POST':
+		db.execute('insert into questions(question_text, asked_by_id, expert_id) values(?,?,?)', [ request.form['question'], user['id'], request.form['expert'] ])
+		db.commit()
+
+		return redirect(url_for('index'))
+	
+	expert_cur = db.execute('select id, name from users where expert=1')
+	expres = expert_cur.fetchall()
+
+	return render_template('ask.html',user=user, experts = expres)
 
 @app.route('/unanswered')
 def unanswered():
 	user = get_current_user()
-	return render_template('unanswered.html', user=user)
+	db = get_db()
+	questions_cur = db.execute('select questions.id, questions.question_text, users.name from questions join users on users.id=questions.asked_by_id where questions.answer_text is null and questions.expert_id =?', [user['id']])
+	questions = questions_cur.fetchall()
+	return render_template('unanswered.html', user=user, questions = questions)
 
 @app.route('/users')
 def users():
 	user = get_current_user()
-	return render_template('users.html', user=user)
+	db = get_db()
+	users_cur = db.execute('select id, name, expert, admin from users')
+	users_result = users_cur.fetchall()			
+	return render_template('users.html', user=user, users= users_result)
+
+@app.route('/promote/<user_id>')
+def promote(user_id):
+	db = get_db()
+	db.execute('update users set expert =1 where id =?', [user_id])
+	db.commit()
+
+	return redirect(url_for('users'))
 
 @app.route('/logout')
 def logout():
