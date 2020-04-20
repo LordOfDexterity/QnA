@@ -21,8 +21,8 @@ upon submission, the expert shall be able to answer the question and both shall 
 
 ### Admin user has universal access
 Username: nikki <t/><t/> Password: meow  <br/>
-the admin has the priviledge to acces the user setup.
+the admin has the priviledge to promote users to an expert
 
 ### other users 
 username: expert <t/><t/> Password: expert <br/>
-username: testuser <t/><t/> Password:password <br/>
+username: niks <t/><t/> Password:yash <br/>
