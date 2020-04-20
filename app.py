@@ -26,16 +26,21 @@ def index():
 	user = get_current_user()
 	db = get_db()
 
-	qcur = db.execute('select questions.id, questions.question_text, askers.name as asker_name, experts.name as expert_name from questions join users as askers on askers.id = questions.asked_by_id join users as experts on experts.id = questions.expert_id where questions.answer_text is not null')
-	qres = qcur.fetchone()
+	qcur = db.execute('select questions.id as question_id, questions.question_text, askers.name as asker_name, experts.name as expert_name from questions join users as askers on askers.id=questions.asked_by_id join users as experts on experts.id = questions.expert_id where questions.answer_text is not null')
+	qres = qcur.fetchall()
 
-	return render_template('home.html', user =user)
+	return render_template('home.html', user =user, questions=qres)
 
 @app.route('/register', methods= ['GET','POST'])
 def register():
 	user = get_current_user()
 	if request.method == 'POST':
 		db = get_db()
+		existcur = db.execute('select id from users where name =?', [request.form['name']])
+		exist = existcur.fetchone()
+
+		if exist:
+			return render_template('register.html', user=user, error='User already exists!')
 		hashed_password = generate_password_hash(request.form['password'], method='sha256')
 		db.execute('insert into users(name, password, expert, admin) values(?,?,?,?)', [request.form['name'], hashed_password, '0','0'])
 		db.commit()
@@ -66,10 +71,13 @@ def login():
 
 	return render_template('login.html', user=user)
 
-@app.route('/question')
-def question():
+@app.route('/question/<question_id>')
+def question(question_id):
 	user = get_current_user()
-	return render_template('question.html',user=user)
+	db = get_db()
+	qcur = db.execute('select questions.question_text, questions.answer_text, askers.name as asker_name, experts.name as expert_name from questions join users as askers on askers.id=questions.asked_by_id join users as experts on experts.id = questions.expert_id where questions.id=?', [question_id])
+	qres = qcur.fetchone()
+	return render_template('question.html',user=user, question=qres)
 
 @app.route('/answer/<question_id>', methods=['GET','POST'])
 def answer(question_id):
