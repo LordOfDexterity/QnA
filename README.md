@@ -25,4 +25,4 @@ the admin has the priviledge to promote users to an expert
 
 ### other users 
 username: expert <t/><t/> Password: expert <br/>
-username: niks <t/><t/> Password: yash <br/>
+
