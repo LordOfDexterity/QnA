@@ -12,7 +12,7 @@ download the code and access it from your terminal
 > or set it with the environment variable
 > - set FLASK_APP = app.py
 > - flask run 
-- the app will run on localhost
+- the app will run on [localhost](http://127.0.0.1:5000/)
 
 
 ### flow 
